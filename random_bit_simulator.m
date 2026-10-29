@@ -1,4 +1,3 @@
-
 % Clear the Command Window
 clc;
 

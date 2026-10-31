@@ -33,7 +33,30 @@ for i in range(total_samples):
 
     bpsk_signal.append(nrz * c_point)
 
-fig, axes = plt.subplots(3, 1, figsize=(10, 7), sharex=True)
+demodulated_signal = []
+recovered_bits = []
+
+for i in range(total_samples):
+    product = bpsk_signal[i] * carrier[i]
+    demodulated_signal.append(product)
+
+for bit_index in range(num_bits):
+    start = bit_index * sample_per_symbol
+    end = start + sample_per_symbol
+
+    integral = sum(demodulated_signal[start:end]) * delta_time
+
+    if integral > 0:
+        recovered_bits.append(1)
+    else:
+        recovered_bits.append(0)
+
+recovered_signal = []
+
+for bit in recovered_bits:
+    recovered_signal.extend([bit] * sample_per_symbol)
+
+fig, axes = plt.subplots(5, 1, figsize=(11, 10), sharex=True)
 
 axes[0].plot(time, digital_signal, 'b', linewidth=2)
 axes[0].set_ylabel("Binary Data", fontsize=11)
@@ -49,6 +72,16 @@ axes[2].plot(time, bpsk_signal, 'r', linewidth=1.5)
 axes[2].set_ylabel("BPSK Signal", fontsize=11)
 axes[2].set_xlabel("Time (s)", fontsize=11)
 axes[2].grid(True, linestyle='--', alpha=0.6)
+
+axes[3].plot(time, demodulated_signal, 'm')
+axes[3].set_ylabel("Product Signal")
+axes[3].grid(True)
+
+axes[4].plot(time, recovered_signal, 'k')
+axes[4].set_ylabel("Recovered Bits")
+axes[4].set_xlabel("Time (s)")
+axes[4].set_yticks([0, 1])
+axes[4].grid(True)
 
 plt.suptitle("BPSK Simulation", fontsize=14, fontweight='bold')
 plt.tight_layout()

@@ -1,10 +1,12 @@
 import math
+import random
 import matplotlib.pyplot as plt
 
 bits = [1, 0, 1, 1, 0, 1, 0]    # binary data stream
 sample_per_symbol = 200         # resolution
 symbol_duration = 1.0           # seconds
 carrier_freq = 3.0              # cycles per symbol
+noise_std = 0.6                 # standard deviation of AWGN noise
 
 num_bits = len(bits)
 total_samples = num_bits * sample_per_symbol
@@ -14,6 +16,7 @@ time = []
 digital_signal = []
 carrier = []
 bpsk_signal = []
+noisy_bpsk_signal = []
 
 for i in range(total_samples):
     current_time = i * delta_time
@@ -31,13 +34,17 @@ for i in range(total_samples):
     c_point = math.cos(2 * math.pi * carrier_freq * (current_time / symbol_duration))
     carrier.append(c_point)
 
-    bpsk_signal.append(nrz * c_point)
+    clean_bpsk = nrz * c_point
+    bpsk_signal.append(clean_bpsk)
+
+    noise = random.gauss(0, noise_std)
+    noisy_bpsk_signal.append(clean_bpsk + noise)
 
 demodulated_signal = []
 recovered_bits = []
 
 for i in range(total_samples):
-    product = bpsk_signal[i] * carrier[i]
+    product = noisy_bpsk_signal[i] * carrier[i]
     demodulated_signal.append(product)
 
 for bit_index in range(num_bits):
@@ -56,33 +63,37 @@ recovered_signal = []
 for bit in recovered_bits:
     recovered_signal.extend([bit] * sample_per_symbol)
 
-fig, axes = plt.subplots(5, 1, figsize=(11, 10), sharex=True)
+fig, axes = plt.subplots(6, 1, figsize=(11, 11), sharex=True)
 
 axes[0].plot(time, digital_signal, 'b', linewidth=2)
-axes[0].set_ylabel("Binary Data", fontsize=11)
+axes[0].set_ylabel("Binary Data", fontsize=10)
 axes[0].set_yticks([0, 1])
 axes[0].grid(True, linestyle='--', alpha=0.6)
 axes[0].set_ylim(-0.2, 1.2)
 
 axes[1].plot(time, carrier, 'g', linewidth=1.5)
-axes[1].set_ylabel("Carrier Wave", fontsize=11)
+axes[1].set_ylabel("Carrier Wave", fontsize=10)
 axes[1].grid(True, linestyle='--', alpha=0.6)
 
 axes[2].plot(time, bpsk_signal, 'r', linewidth=1.5)
-axes[2].set_ylabel("BPSK Signal", fontsize=11)
-axes[2].set_xlabel("Time (s)", fontsize=11)
+axes[2].set_ylabel("BPSK (Clean)", fontsize=10)
 axes[2].grid(True, linestyle='--', alpha=0.6)
 
-axes[3].plot(time, demodulated_signal, 'm')
-axes[3].set_ylabel("Product Signal")
-axes[3].grid(True)
+axes[3].plot(time, noisy_bpsk_signal, color='orange', linewidth=1)
+axes[3].set_ylabel("BPSK (Noisy)", fontsize=10)
+axes[3].grid(True, linestyle='--', alpha=0.6)
 
-axes[4].plot(time, recovered_signal, 'k')
-axes[4].set_ylabel("Recovered Bits")
-axes[4].set_xlabel("Time (s)")
-axes[4].set_yticks([0, 1])
-axes[4].grid(True)
+axes[4].plot(time, demodulated_signal, 'm', linewidth=1)
+axes[4].set_ylabel("Product Signal", fontsize=10)
+axes[4].grid(True, linestyle='--', alpha=0.6)
 
-plt.suptitle("BPSK Simulation", fontsize=14, fontweight='bold')
+axes[5].plot(time, recovered_signal, 'k', linewidth=2)
+axes[5].set_ylabel("Recovered Bits", fontsize=10)
+axes[5].set_xlabel("Time (s)", fontsize=11)
+axes[5].set_yticks([0, 1])
+axes[5].grid(True, linestyle='--', alpha=0.6)
+axes[5].set_ylim(-0.2, 1.2)
+
+plt.suptitle(f"BPSK Simulation with AWGN (noise_std={noise_std})", fontsize=14, fontweight='bold')
 plt.tight_layout()
 plt.show()
